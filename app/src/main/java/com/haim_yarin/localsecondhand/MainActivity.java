@@ -4,9 +4,16 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,6 +39,7 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.Console;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +52,14 @@ public class MainActivity extends AppCompatActivity {
     private ItemsList itemsList;
     private Authentication auth;
     private MenuItem menuAuth;
+/*
+    private LocationManager locationManager;
+    private LocationListener locationlistener;
+    private Button button;
+    private Gps gps;
 
+
+ */
 
     private ImageButton btnAddItem;
 
@@ -53,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ItemActivity = new Intent(this,ItemActivity.class);
+        ItemActivity = new Intent(this, ItemActivity.class);
         itemsList = new ItemsList(this);
         ListView listView = findViewById(R.id.itemList);
         listView.setAdapter(itemsList);
@@ -61,37 +76,105 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Item item = itemsList.getItem(i);
-                ItemActivity.putExtra("price",item.getPrice());
-                ItemActivity.putExtra("title",item.getTitle());
-                ItemActivity.putExtra("discription",item.getDiscription());
-                ItemActivity.putExtra("name",item.getUser().getName());
-                ItemActivity.putExtra("email",item.getUser().getEmail());
-                ItemActivity.putExtra("phone",item.getUser().getPhone());
-                ItemActivity.putExtra("image",item.getImageUrl());
+                ItemActivity.putExtra("price", item.getPrice());
+                ItemActivity.putExtra("title", item.getTitle());
+                ItemActivity.putExtra("discription", item.getDiscription());
+                ItemActivity.putExtra("name", item.getUser().getName());
+                ItemActivity.putExtra("email", item.getUser().getEmail());
+                ItemActivity.putExtra("phone", item.getUser().getPhone());
+                ItemActivity.putExtra("image", item.getImageUrl());
                 startActivity(ItemActivity);
             }
         });
 
-        Login = new Intent(this,LoginActivity.class);
+        Login = new Intent(this, LoginActivity.class);
         //startActivity(Login);
 
-        auth = new Authentication(this,MainActivity.this);
+        auth = new Authentication(this, MainActivity.this);
         //auth.Logout();
 
 
-        addItemForm = new Intent(this,AddItemFormActivity.class);
+        addItemForm = new Intent(this, AddItemFormActivity.class);
         btnAddItem = (ImageButton) findViewById(R.id.btnAddItem);
         btnAddItem.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if(!auth.isLogin())
+                if (!auth.isLogin())
                     auth.SignInGoogle(getResources().getInteger(R.integer.sign_in_add_item));
                 else
                     goToAddItemForm();
 
             }
         });
+    }
+
+/*
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationlistener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                Log.d("GPS",location.getLatitude()+" "+location.getLongitude());
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+                Intent intent = new Intent(Settings.ACTION_LOCALE_SETTINGS);
+                startActivity(intent);
+
+            }
+        };
+        gps = new Gps(locationManager,locationlistener);
+        button = (Button)findViewById(R.id.gpsBtn);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gps.configureButton();
+            }
+        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_CHECKIN_PROPERTIES,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET},10);
+                return;
+            }
+        } else{
+            gps.configureButton();
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 10:
+                if(grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    configureButton();
+                return;
+        }
 
     }
+
+
+    private void configureButton() {
+
+                locationManager.requestLocationUpdates("gps", 0, 0, locationlistener);
+                locationManager.removeUpdates(locationlistener);
+
+
+    }
+
+
+ */
+
+
 
     @Override
     public void onResume(){

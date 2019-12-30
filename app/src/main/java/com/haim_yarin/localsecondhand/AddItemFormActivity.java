@@ -12,11 +12,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -64,6 +69,12 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private Map<String, Object> user;
 
+    private LocationManager locationManager;
+    private LocationListener locationlistener;
+    private Button button;
+    private Gps gps;
+
+
 
 
     @Override
@@ -87,6 +98,49 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
         user.put("Uid",getIntent().getExtras().getString("uid"));
         user.put("Email",getIntent().getExtras().getString("email"));
         user.put("Phone",getIntent().getExtras().getString("phone"));
+
+
+
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationlistener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                Log.d("GPS",location.getLatitude()+" "+location.getLongitude());
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+                Intent intent = new Intent(Settings.ACTION_LOCALE_SETTINGS);
+                startActivity(intent);
+
+            }
+        };
+        gps = new Gps(locationManager,locationlistener);
+        button = (Button)findViewById(R.id.gpsBtn);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gps.configureButton();
+            }
+        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_CHECKIN_PROPERTIES,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET},10);
+                return;
+            }
+        } else{
+            gps.configureButton();
+        }
 
     }
 
