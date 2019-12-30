@@ -101,11 +101,13 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
 
 
 
+        /*
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationlistener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 Log.d("GPS",location.getLatitude()+" "+location.getLongitude());
+                gps.setLocation(location.getLatitude(),location.getLongitude(),location);
 
             }
 
@@ -135,6 +137,7 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
             }
         }
 
+         */
     }
 
     @Override

@@ -16,29 +16,45 @@ import androidx.core.content.ContextCompat;
 
 public class Gps {
 
-    private float latitude, Longitude ;
+    private Location location;
+    private double latitude, longitude ;
     private LocationManager locationManager;
     private LocationListener locationlistener;
 
 
     public Gps(LocationManager locationManager , LocationListener locationlistener)
     {
-
         this.locationManager = locationManager;
         this.locationlistener = locationlistener;
         configureButton();
     }
 
-
-
-
     public void configureButton() {
 
-        locationManager.requestLocationUpdates("gps", 0, 0, locationlistener);
-        locationManager.removeUpdates(locationlistener);
+        try{
+            locationManager.requestLocationUpdates("gps", 0, 0, locationlistener);
+            locationManager.removeUpdates(locationlistener);
+        }
+
+        catch(SecurityException se)
+        {
+            Log.d("ERR",se.toString());
+        }
+    }
+
+    public void setLocation(double latitude, double longitude, Location location){
+
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.location = location;
 
     }
 
+    public float distanceBetween(Location location){
+        float[] results = new float[1];
+        Location.distanceBetween(this.latitude,this.longitude,location.getLatitude(),location.getLongitude(),results);
+        return results[0];
+    }
 
 }
 
