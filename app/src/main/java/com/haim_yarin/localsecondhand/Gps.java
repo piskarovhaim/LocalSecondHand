@@ -27,18 +27,10 @@ public class Gps {
         this.locationManager = locationManager;
         this.locationlistener = locationlistener;
         configureButton();
-
     }
 
 
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
-            case 10:
-                if(grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                    configureButton();
-                return;
-        }
-    }
+
 
     public void configureButton() {
 

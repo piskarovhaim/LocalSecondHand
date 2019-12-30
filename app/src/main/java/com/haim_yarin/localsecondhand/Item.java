@@ -5,7 +5,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Item {
+public class Item implements Comparable<Item>{
     private String title;
     private String discription;
     private String imageUrl;
@@ -47,5 +47,13 @@ public class Item {
     public String getPrice(){return  this.price;}
     public User getUser(){
         return user;
+    }
+
+    @Override
+    public int compareTo(Item compItem) {
+
+        if(this.title.indexOf(compItem.getTitle()) > -1)
+            return 1;
+        return -1;
     }
 }

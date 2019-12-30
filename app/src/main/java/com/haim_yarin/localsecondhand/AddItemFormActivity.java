@@ -106,6 +106,7 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
             @Override
             public void onLocationChanged(Location location) {
                 Log.d("GPS",location.getLatitude()+" "+location.getLongitude());
+
             }
 
             @Override
@@ -126,22 +127,24 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
             }
         };
         gps = new Gps(locationManager,locationlistener);
-        button = (Button)findViewById(R.id.gpsBtn);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                gps.configureButton();
-            }
-        });
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.ACCESS_CHECKIN_PROPERTIES,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET},10);
                 return;
             }
-        } else{
-            gps.configureButton();
         }
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 10:
+                if(grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    gps.configureButton();
+                return;
+        }
     }
 
     @Override

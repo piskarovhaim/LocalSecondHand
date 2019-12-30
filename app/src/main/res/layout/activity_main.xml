@@ -17,18 +17,25 @@
             android:layout_margin="5dp"
             android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/gpsBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="GPS" />
-
             <ImageButton
                 android:id="@+id/btnAddItem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@android:drawable/ic_input_add" />
+
+            <ImageButton
+                android:id="@+id/btnSearch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@android:drawable/ic_search_category_default" />
+
+            <EditText
+                android:id="@+id/edSearchTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10" />
+
         </LinearLayout>
 
         <ListView
