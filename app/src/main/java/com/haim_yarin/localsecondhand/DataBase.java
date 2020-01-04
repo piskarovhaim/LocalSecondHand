@@ -30,18 +30,16 @@ public class DataBase {
 
     public  void UpdateItems(ItemsList itemsList){
         this.itemsList = itemsList;
-        new readUsers().execute();
+        new readItems().execute();
     }
 
 
-    private class readUsers extends AsyncTask<String, Void, ArrayList<Item>>
+    private class readItems extends AsyncTask<String, Void, ArrayList<Item>>
         {
-
             @Override
             protected void onPreExecute()
             {
                 super.onPreExecute();
-
             }
 
             protected ArrayList<Item> doInBackground(String... urls)
@@ -71,7 +69,6 @@ public class DataBase {
             protected void onPostExecute(ArrayList<Item> result)
             {
                 itemsList.setItemsList(tempItemList);
-                itemsList.notifyDataSetChanged();
             }
         }
 

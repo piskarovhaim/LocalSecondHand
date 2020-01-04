@@ -8,10 +8,12 @@ import android.Manifest;
 import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -24,6 +26,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -44,135 +47,112 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,ListView.OnItemClickListener {
 
     private Intent addItemForm;
     private Intent ItemActivity;
-    private Intent Login;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private Intent AuthActivity;
     private ItemsList itemsList;
     private Authentication auth;
     private MenuItem menuAuth;
     private MyNotification notification;
+    private WifiReceiver wifiReceiver;
 
 
 
     private ImageButton btnAddItem;
     private ImageButton btnSearch;
     private EditText edSearchTitle;
+    private EditText edSearchRange;
 
-    private LocationManager locationManager;
-    private LocationListener locationlistener;
-    private Button button;
     private Gps gps;
+
+    final private static int CONNECT = 10;
+    final private static int LOGOUT = 20;
+    final private static int ADD_ITEM = 30;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         ItemActivity = new Intent(this,ItemActivity.class);
+
         itemsList = new ItemsList(this);
         ListView listView = findViewById(R.id.itemList);
         listView.setAdapter(itemsList);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Item item = itemsList.getItem(i);
-                ItemActivity.putExtra("price",item.getPrice());
-                ItemActivity.putExtra("title",item.getTitle());
-                ItemActivity.putExtra("discription",item.getDiscription());
-                ItemActivity.putExtra("name",item.getUser().getName());
-                ItemActivity.putExtra("email",item.getUser().getEmail());
-                ItemActivity.putExtra("phone",item.getUser().getPhone());
-                ItemActivity.putExtra("image",item.getImageUrl());
-                startActivity(ItemActivity);
-            }
-        });
+        listView.setOnItemClickListener(this);
 
-        Login = new Intent(this,LoginActivity.class);
-        //startActivity(Login);
-
-        auth = new Authentication(this,MainActivity.this);
-        //auth.Logout();
-
+        auth = new Authentication();
 
         addItemForm = new Intent(this,AddItemFormActivity.class);
 
         btnAddItem = (ImageButton) findViewById(R.id.btnAddItem);
         btnAddItem.setOnClickListener(this);
-
         btnSearch = (ImageButton)findViewById(R.id.btnSearch);
         btnSearch.setOnClickListener(this);
-
         edSearchTitle = (EditText)findViewById(R.id.edSearchTitle);
+        edSearchRange = (EditText)findViewById(R.id.edRange);
 
 
-        notification = new MyNotification((NotificationManager) getSystemService(NOTIFICATION_SERVICE),this,itemsList);
+
+        notification = new MyNotification((NotificationManager) getSystemService(NOTIFICATION_SERVICE),this,itemsList,auth);
         notification.ListenToChange();
 
 
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        locationlistener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                Log.d("GPS",location.getLatitude()+" "+location.getLongitude());
-                gps.setLocation(location.getLatitude(),location.getLongitude(),location);
+        gps = new Gps(this);
+        wifiReceiver = new WifiReceiver(gps);
+        IntentFilter intentFilter = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 
-            }
+        // register the receiver with the filter
+        registerReceiver(wifiReceiver, intentFilter);
 
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-                Intent intent = new Intent(Settings.ACTION_LOCALE_SETTINGS);
-                startActivity(intent);
-
-            }
-        };
-
-        gps = new Gps(locationManager,locationlistener);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_CHECKIN_PROPERTIES,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET},10);
-                return;
-            }
-        }
-
+        AuthActivity = new Intent(this,Authentication.class);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
-            case 10:
-                if(grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                    gps.configureButton();
-                return;
-        }
+    public void onItemClick(AdapterView<?> parent, View view, int i, long id)
+    {
+        Item item = itemsList.getItem(i);
+        ItemActivity.putExtra("price",item.getPrice());
+        ItemActivity.putExtra("title",item.getTitle());
+        ItemActivity.putExtra("discription",item.getDiscription());
+        ItemActivity.putExtra("name",item.getUser().getName());
+        ItemActivity.putExtra("email",item.getUser().getEmail());
+        ItemActivity.putExtra("phone",item.getUser().getPhone());
+        ItemActivity.putExtra("image",item.getImageUrl());
+        startActivity(ItemActivity);
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.btnAddItem:
-                if(!auth.isLogin())
-                    auth.SignInGoogle(getResources().getInteger(R.integer.sign_in_add_item));
+                if(!gps.isPermissionToReadGPSLocationOK())
+                    break;
+                if(!auth.isLogin()) {
+                    AuthActivity = new Intent(MainActivity.this,Authentication.class);
+                    AuthActivity.putExtra("login",true);
+                    startActivityForResult(AuthActivity,ADD_ITEM);
+                }
                 else
                     goToAddItemForm();
                 break;
             case R.id.btnSearch:
+                if(!gps.isPermissionToReadGPSLocationOK())
+                    break;
                 String title = edSearchTitle.getText().toString();
-                Item item = new Item(title,"dfg","dfg","dfg","sdfg","dfg","dsfg","dfg");
-                itemsList.Search(item);
+                float range;
+                try {
+                    range = (float)Integer.parseInt(edSearchRange.getText().toString());
+                }catch (Exception e){
+                    Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Item item = new Item(title,"dfg","dfg","dfg","sdfg","dfg","dsfg","dfg",gps.getLatitude(),gps.getLongitude());
+                itemsList.Search(item,range);
             default:
                 break;
 
@@ -180,29 +160,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onResume(){
-        super.onResume();
-        itemsList.UpdateItemsList();
-
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-                if (account != null) {
-                    firebaseAuthWithGoogle(account,requestCode);
-                    menuAuth.setTitle("התנתק");
-                }
-
-            } catch (ApiException e) {
-                Log.w("TAG", "Google sign in failed", e);
-            }
-
+        if (requestCode == ADD_ITEM && resultCode == RESULT_OK){
+            menuAuth.setTitle("התנתק");
+            goToAddItemForm();
+        }
+        if (requestCode == CONNECT && resultCode == RESULT_OK){
+            menuAuth.setTitle("התנתק");
+        }
+        if (requestCode == LOGOUT && resultCode == RESULT_OK){
+            menuAuth.setTitle("התחבר");
+        }
     }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        itemsList.UpdateItemsList();
+        if(gps.isPermissionToReadGPSLocationOK())
+            gps.trackLocation(wifiReceiver.getProvider());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        gps.RemoveUpdates();
+    }
+
 
     private void goToAddItemForm() {
         FirebaseUser fUser = auth.getUser();
@@ -210,39 +196,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         addItemForm.putExtra("uid",fUser.getUid());
         addItemForm.putExtra("email",fUser.getEmail());
         addItemForm.putExtra("phone",fUser.getPhoneNumber());
+        addItemForm.putExtra("latitude",gps.getLatitude());
+        addItemForm.putExtra("longitude",gps.getLongitude());
         startActivity(addItemForm);
-    }
-
-    public void firebaseAuthWithGoogle(GoogleSignInAccount acct, final int requestCode) {
-        Log.d("TAG", "firebaseAuthWithGoogle:" + acct.getId());
-
-        AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
-        auth.getAuth().signInWithCredential(credential)
-                .addOnCompleteListener(this,new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete (@NonNull Task <AuthResult> task) {
-                        if (task.isSuccessful ()) {
-                            if (task.isSuccessful()) {
-                                Log.d("TAsignInWithCredentialG", "signInWithCredential:success");
-                                auth.setUser();
-                                if (requestCode == getResources().getInteger(R.integer.sign_in_add_item)) {
-                                    goToAddItemForm();
-                                }
-                            } else {
-
-                                Log.w("TAG", "signInWithCredential:failure", task.getException());
-                            }
-                        } else {
-                            // Sign in failed, display a message and update the UI
-                            Log.w ("TAG", "signInWithCredential: failure", task.getException ());
-                            if (task.getException () instanceof FirebaseAuthInvalidCredentialsException) {
-                                // The verification code entered was invalid
-                            }
-                        }
-                    }
-                });
-
-
     }
 
     // Action Bar
@@ -263,11 +219,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public boolean onMenuItemClick(MenuItem item)
             {
                 if(auth.isLogin()) {
-                    auth.Logout();
-                    menuAuth.setTitle("התחבר");
+                    AuthActivity = new Intent(MainActivity.this,Authentication.class);
+                    AuthActivity.putExtra("logout",true);
+                    startActivityForResult(AuthActivity,LOGOUT);
                 }
                 else {
-                    auth.SignInGoogle(getResources().getInteger(R.integer.sign_in_from_menu));
+                    AuthActivity = new Intent(MainActivity.this,Authentication.class);
+                    AuthActivity.putExtra("login",true);
+                    startActivityForResult(AuthActivity,CONNECT);
+
                 }
                 return true;
             }

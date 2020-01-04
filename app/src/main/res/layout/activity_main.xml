@@ -34,7 +34,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:ems="10" />
+                android:ems="10"
+                android:hint="item name" />
+
+            <EditText
+                android:id="@+id/edRange"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:hint="location range"
+                android:inputType="textPersonName" />
 
         </LinearLayout>
 

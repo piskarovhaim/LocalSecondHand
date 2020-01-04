@@ -30,7 +30,7 @@ public class ItemsList extends ArrayAdapter<Item> {
     public ItemsList(@NonNull Context context) {
         super(context, 0);
         itemsList = new ArrayList<Item>();
-        filteredItemsList = new ArrayList<>();
+        filteredItemsList = new ArrayList<Item>();
         db = new DataBase();
         this.context = context;
     }
@@ -44,10 +44,10 @@ public class ItemsList extends ArrayAdapter<Item> {
         db.UpdateItems(this);
     }
 
-    public void Search(Item item){
+    public void Search(Item item,float distance){
         this.filteredItemsList = new ArrayList<>();
         for(int i = 0 ; i < itemsList.size() ; i++) {
-            if (itemsList.get(i).compareTo(item) > 0)
+            if (itemsList.get(i).compareTo(item,distance) > 0)
                 filteredItemsList.add(itemsList.get(i));
         }
         this.notifyDataSetChanged();
@@ -57,6 +57,7 @@ public class ItemsList extends ArrayAdapter<Item> {
     public void setItemsList(ArrayList<Item> itemsList){
         this.itemsList = itemsList;
         this.filteredItemsList = itemsList;
+        this.notifyDataSetChanged();
     }
 
     @Override
@@ -82,9 +83,6 @@ public class ItemsList extends ArrayAdapter<Item> {
         Picasso.with(context).load(item.getImageUrl())
                 .fit()
                 .into(itemImage);
-
-
-
 
         return listItemView;
     }

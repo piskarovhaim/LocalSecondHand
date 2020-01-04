@@ -68,20 +68,12 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
     private ProgressBar ProgressBar;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private Map<String, Object> user;
-
-    private LocationManager locationManager;
-    private LocationListener locationlistener;
-    private Button button;
-    private Gps gps;
-
-
-
+    private Map<String, Object> location;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_item_form);
-
 
         edTitle = (EditText)findViewById(R.id.edTitle);
         edDiscription = (EditText)findViewById(R.id.edDiscription);
@@ -99,56 +91,11 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
         user.put("Email",getIntent().getExtras().getString("email"));
         user.put("Phone",getIntent().getExtras().getString("phone"));
 
-
-
-        /*
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        locationlistener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                Log.d("GPS",location.getLatitude()+" "+location.getLongitude());
-                gps.setLocation(location.getLatitude(),location.getLongitude(),location);
-
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-                Intent intent = new Intent(Settings.ACTION_LOCALE_SETTINGS);
-                startActivity(intent);
-
-            }
-        };
-        gps = new Gps(locationManager,locationlistener);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_CHECKIN_PROPERTIES,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET},10);
-                return;
-            }
-        }
-
-         */
+        location = new HashMap<>();
+        location.put("Latitude",getIntent().getExtras().getDouble("latitude"));
+        location.put("Longitude",getIntent().getExtras().getDouble("longitude"));
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
-            case 10:
-                if(grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                    gps.configureButton();
-                return;
-        }
-    }
 
     @Override
     public void onClick(View v) {
@@ -244,6 +191,7 @@ public class AddItemFormActivity extends AppCompatActivity implements View.OnCli
                         item.put("Price", edPrice.getText().toString());
                         item.put("ImageUrl", downloadUri.toString());
                         item.put("user",user);
+                        item.put("location",location);
                         db.collection("items").document()
                                 .set(item)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {

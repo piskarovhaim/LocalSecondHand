@@ -34,9 +34,11 @@ public class MyNotification {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private boolean firstRun = true;
     private ItemsList itemsList;
+    private Authentication auth;
 
-    public MyNotification(NotificationManager notificationManager, Context context, ItemsList itemsList){
+    public MyNotification(NotificationManager notificationManager, Context context, ItemsList itemsList,Authentication auth){
 
+        this.auth = auth;
         this.itemsList = itemsList;
         this.context = context;
         // 1. Get reference to Notification Manager
@@ -82,8 +84,9 @@ public class MyNotification {
                                         ex.printStackTrace();
                                     }
                                     if(!firstRun){
-                                        showNotification("new item",item.getTitle());
-                                        Log.d("changggg", "New: " + dc.getDocument().getData());
+                                            if(auth.getUser() == null || auth.getUser().getUid().compareTo(item.getUser().getUid())  != 0)
+                                            showNotification("new item", item.getTitle());
+                                            Log.d("changggg", "New: " + dc.getDocument().getData());
                                     }
                                     break;
                                 case MODIFIED:

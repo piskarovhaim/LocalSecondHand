@@ -1,24 +1,27 @@
 package com.haim_yarin.localsecondhand;
 
+import android.location.Location;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Item implements Comparable<Item>{
+public class Item{
     private String title;
     private String discription;
     private String imageUrl;
     private String price;
     private User user;
+    private ItemLocation location;
 
-    public Item (String title , String discription,String imageUrl,String price,String name, String pid, String email, String phone){
+    public Item(String title, String discription, String imageUrl, String price, String name, String pid, String email, String phone, double latitude, double longitude){
 
         this.title = title;
         this.discription = discription;
         this.imageUrl = imageUrl;
         this.price = price;
         this.user = new User(name,pid,email,phone);
+        this.location = new ItemLocation(latitude,longitude);
     }
 
     public Item (JSONObject JSON_item) throws JSONException {
@@ -32,10 +35,14 @@ public class Item implements Comparable<Item>{
         String email=user.getString("Email");
         String phone=user.getString("Phone");
         this.user = new User(name,uid,email,phone);
+        JSONObject location = JSON_item.getJSONObject("location");
+        double latitude = location.getDouble("Latitude");
+        double longitude = location.getDouble("Longitude");
+        this.location = new ItemLocation(latitude,longitude);
 
     }
 
-    public String getTitle(){
+    String getTitle(){
         return this.title;
     }
     public String getDiscription(){
@@ -48,11 +55,15 @@ public class Item implements Comparable<Item>{
     public User getUser(){
         return user;
     }
+    public ItemLocation getLocation(){
+        return this.location;
+    }
 
-    @Override
-    public int compareTo(Item compItem) {
+    public int compareTo(Item compItem,float distance) {
 
-        if(this.title.indexOf(compItem.getTitle()) > -1)
+        float[] results = new float[1];
+        Location.distanceBetween(this.location.getLatitude(),this.location.getLongitude(),compItem.getLocation().getLatitude(),compItem.getLocation().getLongitude(),results);
+        if(this.title.indexOf(compItem.getTitle()) > -1 && results[0] < distance)
             return 1;
         return -1;
     }
