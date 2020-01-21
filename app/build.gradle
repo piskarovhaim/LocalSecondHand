@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
 
     defaultConfig {
-        applicationId "com.haim_yarin.localsecondhand"
+        applicationId "com.haim_yarin.finalProject"
         minSdkVersion 19
         targetSdkVersion 29
         multiDexEnabled true

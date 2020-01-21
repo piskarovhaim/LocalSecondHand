@@ -1,4 +1,4 @@
-package com.haim_yarin.localsecondhand;
+package com.haim_yarin.finalProject;
 
 import org.junit.Test;
 
